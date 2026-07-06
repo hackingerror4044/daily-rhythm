@@ -16,8 +16,7 @@ app.use(cors());
 app.use(express.json());
 
 // Serve the frontend (index.html, css, js, etc.) from the /public folder
-app.use(express.static(path.join(__dirname, 'public')));
-
+app.use(express.static(__dirname));
 // Make sure users.json exists before we start
 if (!fs.existsSync(DB_FILE)) {
   fs.writeFileSync(DB_FILE, JSON.stringify([]));
