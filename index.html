@@ -310,6 +310,7 @@
   const submitBtn = document.getElementById('submitBtn');
   const statusMsg = document.getElementById('statusMsg');
   const nameEl = document.getElementById('name');
+  const usernameEl = document.getElementById('username');
   const emailEl = document.getElementById('email');
   const passEl = document.getElementById('password');
 
@@ -317,10 +318,11 @@
 
   submitBtn.addEventListener('click', async () => {
     const name = nameEl.value.trim();
+    const username = usernameEl.value.trim();
     const email = emailEl.value.trim();
     const pass = passEl.value;
 
-    if(!name || !email || !pass){
+    if(!name || !username || !email || !pass){
       statusMsg.textContent = 'Fill in name, email, and password first.';
       statusMsg.style.color = '#E76F51';
       return;
@@ -338,7 +340,7 @@
       const res = await fetch(BACKEND_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password: pass })
+        body: JSON.stringify({ name, username, email, password: pass })
       });
       const data = await res.json();
 
@@ -350,7 +352,7 @@
 
       statusMsg.textContent = 'Saved! Welcome, ' + name + '.';
       statusMsg.style.color = '#2E8B57';
-      nameEl.value = ''; emailEl.value = ''; passEl.value = '';
+      nameEl.value = ''; usernameEl.value = ''; emailEl.value = ''; passEl.value = '';
     } catch (err) {
       statusMsg.textContent = 'Could not reach the server. Is it running?';
       statusMsg.style.color = '#E76F51';
