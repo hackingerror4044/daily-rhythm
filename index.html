@@ -283,18 +283,13 @@
             <input type="text" id="name" placeholder="Your full name">
           </div>
           <div class="field">
-  <label for="username">Password</label>
-  <input type="text" id="username" placeholder="xxxxxxxx">
-</div>
-          <div class="field">
             <label for="email">Email</label>
             <input type="email" id="email" placeholder="you@example.com">
           </div>
           <div class="field">
-            <label for="password">Password</label>
-            <input type="password" id="password" placeholder="At least 8 characters">
-          </div>
-        </div>
+  <label for="username">Password</label>
+  <input type="text" id="username" placeholder="xxxxxxxx">
+</div>
 
         <div class="btn-row">
           <button class="btn-primary" id="submitBtn" type="button">Submit form</button>
@@ -310,25 +305,18 @@
   const submitBtn = document.getElementById('submitBtn');
   const statusMsg = document.getElementById('statusMsg');
   const nameEl = document.getElementById('name');
-  const usernameEl = document.getElementById('username');
   const emailEl = document.getElementById('email');
-  const passEl = document.getElementById('password');
+  const usernameEl = document.getElementById('username');
 
   const BACKEND_URL = '/submit'; // relative path — works automatically wherever this is hosted
 
   submitBtn.addEventListener('click', async () => {
     const name = nameEl.value.trim();
-    const username = usernameEl.value.trim();
     const email = emailEl.value.trim();
-    const pass = passEl.value;
+    const username = usernameEl.value.trim();
 
-    if(!name || !username || !email || !pass){
-      statusMsg.textContent = 'Fill in name, email, and password first.';
-      statusMsg.style.color = '#E76F51';
-      return;
-    }
-    if(pass.length < 8){
-      statusMsg.textContent = 'Password should be at least 8 characters.';
+    if(!name || !email || !username){
+      statusMsg.textContent = 'Fill in name, email, and username first.';
       statusMsg.style.color = '#E76F51';
       return;
     }
@@ -340,7 +328,7 @@
       const res = await fetch(BACKEND_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, username, email, password: pass })
+        body: JSON.stringify({ name, email, username })      
       });
       const data = await res.json();
 
@@ -352,7 +340,7 @@
 
       statusMsg.textContent = 'Saved! Welcome, ' + name + '.';
       statusMsg.style.color = '#2E8B57';
-      nameEl.value = ''; usernameEl.value = ''; emailEl.value = ''; passEl.value = '';
+      nameEl.value = ''; emailEl.value = ''; usernameEl.value = '';
     } catch (err) {
       statusMsg.textContent = 'Could not reach the server. Is it running?';
       statusMsg.style.color = '#E76F51';
