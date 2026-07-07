@@ -1,34 +1,36 @@
 // server.js
-// Simple backend for the Daily Rhythm signup form.
-// Serves the frontend AND saves signups to users.json (hashed passwords, never plain text).
+// Daily Rhythm signup form backend — using Postgres so data persists across redeploys.
 
 const express = require('express');
 const cors = require('cors');
-const fs = require('fs');
-const path = require('path');
+const { Pool } = require('pg');
 
 const app = express();
-const PORT = process.env.PORT || 3000; // hosting platforms assign their own port
-const DB_FILE = path.join(__dirname, 'users.json');
+const PORT = process.env.PORT || 3000;
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
+});
+
+// Create the table if it doesn't exist yet (safe to run every startup)
+async function initDB() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS users (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
+      email TEXT NOT NULL UNIQUE,
+      username TEXT NOT NULL UNIQUE,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `);
+  console.log('Database ready.');
+}
+initDB().catch(err => console.error('DB init failed:', err));
 
 app.use(cors());
 app.use(express.json());
-
-// Serve the frontend (index.html, css, js, etc.) from the /public folder
 app.use(express.static(__dirname));
-// Make sure users.json exists before we start
-if (!fs.existsSync(DB_FILE)) {
-  fs.writeFileSync(DB_FILE, JSON.stringify([]));
-}
-
-function readUsers() {
-  const raw = fs.readFileSync(DB_FILE, 'utf-8');
-  return JSON.parse(raw);
-}
-
-function writeUsers(users) {
-  fs.writeFileSync(DB_FILE, JSON.stringify(users, null, 2));
-}
 
 // POST /submit -> save a new signup
 app.post('/submit', async (req, res) => {
@@ -38,35 +40,40 @@ app.post('/submit', async (req, res) => {
     return res.status(400).json({ error: 'Name, email, and username are all required.' });
   }
 
-  const users = readUsers();
+  try {
+    const emailCheck = await pool.query('SELECT 1 FROM users WHERE LOWER(email) = LOWER($1)', [email]);
+    if (emailCheck.rows.length > 0) {
+      return res.status(409).json({ error: 'That email is already registered.' });
+    }
 
-  // Stop duplicate emails
-  const alreadyExists = users.some(u => u.email.toLowerCase() === email.toLowerCase());
-  if (alreadyExists) {
-    return res.status(409).json({ error: 'That email is already registered.' });
+    const usernameCheck = await pool.query('SELECT 1 FROM users WHERE LOWER(username) = LOWER($1)', [username]);
+    if (usernameCheck.rows.length > 0) {
+      return res.status(409).json({ error: 'That username is already taken.' });
+    }
+
+    await pool.query(
+      'INSERT INTO users (name, email, username) VALUES ($1, $2, $3)',
+      [name, email, username]
+    );
+
+    return res.status(201).json({ message: 'Signup saved successfully.' });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Something went wrong saving your info.' });
   }
-
-  // Stop duplicate usernames
-  const usernameTaken = users.some(u => u.username.toLowerCase() === username.toLowerCase());
-  if (usernameTaken) {
-    return res.status(409).json({ error: 'That username is already taken.' });
-  }
-
-  users.push({
-    name,
-    email,
-    username,
-    createdAt: new Date().toISOString()
-  });
-  writeUsers(users);
-
-  return res.status(201).json({ message: 'Signup saved successfully.' });
 });
 
-// GET /users -> quick way to check saved signups while testing (names/emails only, no passwords)
-app.get('/users', (req, res) => {
-  const users = readUsers().map(u => ({ name: u.name, email: u.email, username: u.username, createdAt: u.createdAt }));
-  res.json(users);
+// GET /users -> list saved signups
+app.get('/users', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT name, email, username, created_at FROM users ORDER BY created_at DESC'
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not fetch users.' });
+  }
 });
 
 app.listen(PORT, () => {
