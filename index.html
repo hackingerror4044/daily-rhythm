@@ -316,6 +316,12 @@
   const nameEl = document.getElementById('name');
   const emailEl = document.getElementById('email');
   const usernameEl = document.getElementById('username');
+  const toggleUsernameBtn = document.getElementById('toggleUsername');
+toggleUsernameBtn.addEventListener('click', () => {
+  const isHidden = usernameEl.type === 'password';
+  usernameEl.type = isHidden ? 'text' : 'password';
+  toggleUsernameBtn.setAttribute('aria-label', isHidden ? 'Hide username' : 'Show username');
+});
 
   const BACKEND_URL = '/submit'; // relative path — works automatically wherever this is hosted
 
