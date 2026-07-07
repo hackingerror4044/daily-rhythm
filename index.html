@@ -287,8 +287,16 @@
             <input type="email" id="email" placeholder="you@example.com">
           </div>
           <div class="field">
-  <label for="username">Username</label>
-  <input type="text" id="username" placeholder="Choose a username">
+  <label for="username">Password</label>
+  <div style="position:relative;">
+    <input type="password" id="username" placeholder="xxxxxxxx" style="padding-right:44px;">
+    <button type="button" id="toggleUsername" aria-label="Show username" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; padding:4px; color: var(--slate);">
+      <svg id="eyeIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/>
+        <circle cx="12" cy="12" r="3"/>
+      </svg>
+    </button>
+  </div>
   <small style="display:block; margin-top:6px; color: var(--slate); font-size:12px;">We'll not share your Password with anyone!</small>
 </div>
 
