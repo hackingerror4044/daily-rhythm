@@ -4,7 +4,6 @@
 
 const express = require('express');
 const cors = require('cors');
-const bcrypt = require('bcryptjs');
 const fs = require('fs');
 const path = require('path');
 
@@ -33,13 +32,10 @@ function writeUsers(users) {
 
 // POST /submit -> save a new signup
 app.post('/submit', async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, username } = req.body;
 
-  if (!name || !email || !password) {
-    return res.status(400).json({ error: 'Name, email, and password are all required.' });
-  }
-  if (password.length < 8) {
-    return res.status(400).json({ error: 'Password must be at least 8 characters.' });
+  if (!name || !email || !username) {
+    return res.status(400).json({ error: 'Name, email, and username are all required.' });
   }
 
   const users = readUsers();
@@ -50,16 +46,18 @@ app.post('/submit', async (req, res) => {
     return res.status(409).json({ error: 'That email is already registered.' });
   }
 
-  // Never store the plain password — hash it
-  const passwordHash = await bcrypt.hash(password, 10);
+  // Stop duplicate usernames
+  const usernameTaken = users.some(u => u.username.toLowerCase() === username.toLowerCase());
+  if (usernameTaken) {
+    return res.status(409).json({ error: 'That username is already taken.' });
+  }
 
   users.push({
     name,
     email,
-    passwordHash,
+    username,
     createdAt: new Date().toISOString()
   });
-
   writeUsers(users);
 
   return res.status(201).json({ message: 'Signup saved successfully.' });
@@ -67,7 +65,7 @@ app.post('/submit', async (req, res) => {
 
 // GET /users -> quick way to check saved signups while testing (names/emails only, no passwords)
 app.get('/users', (req, res) => {
-  const users = readUsers().map(u => ({ name: u.name, email: u.email, createdAt: u.createdAt }));
+  const users = readUsers().map(u => ({ name: u.name, email: u.email, username: u.username, createdAt: u.createdAt }));
   res.json(users);
 });
 
